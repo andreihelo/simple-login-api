@@ -28,3 +28,7 @@ gem 'pg'
 group :production do
   gem 'do_postgres'
 end
+
+group :development do
+  gem 'pry'
+end
