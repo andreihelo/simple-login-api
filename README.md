@@ -19,343 +19,118 @@ The entire application is contained within the `app.rb` file.
 
 The SIMPLE LOGIN API to the example app is described below.
 
-## Get list of Students
+## Create a new User
 
 ### Request
 
-`GET /students/`
+`POST /signup/`
 
-    curl -i -H 'Accept: application/json' http://localhost:7000/students/
-
-### Response
-
-    HTTP/1.1 200 OK
-    Date: Thu, 24 Feb 2011 12:36:30 GMT
-    Status: 200 OK
-    Connection: close
-    Content-Type: application/json
-    Content-Length: 2
-
-    []
-
-## Create a new Student
-
-### Request
-
-`POST /students/`
-
-    curl -i -H 'Accept: application/json' -d 'registration_number=123456&name=Foo%last_name=Bar&status=new' http://localhost:7000/students
+    curl -i -H 'Accept: application/json' -X POST -d 'username=foobar&first_name=Foo&last_name=Bar&password=123456&password_confirmation=123456' http://localhost:7000/signup
 
 ### Response
 
     HTTP/1.1 201 Created
-    Date: Thu, 24 Feb 2011 12:36:30 GMT
+    Date: Thu, 27 May 2017 12:36:30 GMT
     Status: 201 Created
     Connection: close
     Content-Type: application/json
-    Location: /students/1
     Content-Length: 36
 
-    {"id":1,"registration_number":123456,"name":"Foo","last_name":"Bar","status":"new"}
+    {"username":"foobar","first_name":"Foo","last_name":"Bar"}
 
-## Get a specific Student
+## Login an existing User
 
 ### Request
 
-`GET /students/id`
+`POST /signin/`
 
-    curl -i -H 'Accept: application/json' http://localhost:7000/students/1
+    curl -i -H 'Accept: application/json' -X POST -d 'username=foobar&password=123456' http://localhost:7000/signin
 
 ### Response
 
     HTTP/1.1 200 OK
-    Date: Thu, 24 Feb 2011 12:36:30 GMT
+    Date: Thu, 27 May 2017 12:36:30 GMT
     Status: 200 OK
     Connection: close
     Content-Type: application/json
     Content-Length: 36
 
-    {"id":1,"registration_number":123456,"name":"Foo","last_name":"Bar","status":"new"}
+    {"token":"d9ffc44a-529c-4af5-8e67-cf452425b55b",username":"foobar","first_name":"Foo","last_name":"Bar"}
 
-## Get a non-existent Student
-
-### Request
-
-`GET /students/id`
-
-    curl -i -H 'Accept: application/json' http://localhost:7000/students/9999
-
-### Response
-
-    HTTP/1.1 404 Not Found
-    Date: Thu, 24 Feb 2011 12:36:30 GMT
-    Status: 404 Not Found
-    Connection: close
-    Content-Type: application/json
-    Content-Length: 35
-
-    {"status":404,"reason":"Not found"}
-
-## Create another new Student
+## Return User with specified token
 
 ### Request
 
-`POST /students/`
+`GET /profile/:token`
 
-    curl -i -H 'Accept: application/json' -d 'registration_number=654321&name=Bar&last_name=Foo' http://localhost:7000/students
-
-### Response
-
-    HTTP/1.1 201 Created
-    Date: Thu, 24 Feb 2011 12:36:31 GMT
-    Status: 201 Created
-    Connection: close
-    Content-Type: application/json
-    Location: /student/2
-    Content-Length: 35
-
-    {"id":2,"registration_number":654321,"name":"Bar","last_name":"Foo","status":null}
-
-## Get list of Students again
-
-### Request
-
-`GET /students/`
-
-    curl -i -H 'Accept: application/json' http://localhost:7000/students/
+    curl -i -H 'Accept: application/json' http://localhost:7000/profile/d9ffc44a-529c-4af5-8e67-cf452425b55b
 
 ### Response
 
     HTTP/1.1 200 OK
-    Date: Thu, 24 Feb 2011 12:36:31 GMT
+    Date: Thu, 27 May 2017 12:36:30 GMT
     Status: 200 OK
     Connection: close
     Content-Type: application/json
-    Content-Length: 74
+    Content-Length: 36
 
-    [{"id":1,"registration_number":123456,"name":"Foo","last_name":"Bar","status":"new"},{"id":2,"registration_number":654321,"name":"Bar","last_name":"Foo","status":null}]
+    {"token":"d9ffc44a-529c-4af5-8e67-cf452425b55b","username":"foobar","first_name":"Foo","last_name":"Bar","password":"123456"}
 
-## Change a Student's state
+## Change User attributes
 
 ### Request
 
-`PATCH /students/:id/status/changed`
+`PUT  /profile/:token`
+`POST /profile/:token`
 
-    curl -i -H 'Accept: application/json' -X PATCH http://localhost:7000/students/1/status/changed
+Allow to change the next attributes:
+
+- first_name
+- last_name
+- password
+- password_confirmation
+
+
+    curl -i -H 'Accept: application/json' -X PUT -d 'first_name=Baz' http://localhost:7000/profile/d9ffc44a-529c-4af5-8e67-cf452425b55b
+    curl -i -H 'Accept: application/json' -X POST -d 'first_name=Baz' http://localhost:7000/profile/d9ffc44a-529c-4af5-8e67-cf452425b55b
 
 ### Response
 
     HTTP/1.1 200 OK
-    Date: Thu, 24 Feb 2011 12:36:31 GMT
-    Status: 200 OK
-    Connection: close
-    Content-Type: application/json
-    Content-Length: 40
-
-    {"id":1,"registration_number":123456,"name":"Foo","last_name":"Bar","status":"changed"}
-
-## Get changed Student
-
-### Request
-
-`GET /students/id`
-
-    curl -i -H 'Accept: application/json' http://localhost:7000/students/1
-
-### Response
-
-    HTTP/1.1 200 OK
-    Date: Thu, 24 Feb 2011 12:36:31 GMT
-    Status: 200 OK
-    Connection: close
-    Content-Type: application/json
-    Content-Length: 40
-
-    {"id":1,"registration_number":123456,"name":"Foo","last_name":"Bar","status":"changed"}
-
-## Change a Student
-
-### Request
-
-`PUT /students/:id`
-
-    curl -i -H 'Accept: application/json' -X PUT -d 'name=Foo&status=changed2' http://localhost:7000/students/1
-
-### Response
-
-    HTTP/1.1 200 OK
-    Date: Thu, 24 Feb 2011 12:36:31 GMT
+    Date: Thu, 27 May 2017 12:36:30 GMT
     Status: 200 OK
     Connection: close
     Content-Type: application/json
     Content-Length: 41
 
-    {"id":1,"registration_number":123456,"name":"Foo","last_name":"Bar","status":"changed2"}
+    {"token":"d9ffc44a-529c-4af5-8e67-cf452425b55b","username":"foobar","first_name":"Baz","last_name":"Bar","password":"123456"}
 
-## Attempt to change a Student using partial params
-
-### Request
-
-`PUT /students/:id`
-
-    curl -i -H 'Accept: application/json' -X PUT -d 'status=changed3' http://localhost:7000/students/1
-
-### Response
-
-    HTTP/1.1 200 OK
-    Date: Thu, 24 Feb 2011 12:36:32 GMT
-    Status: 200 OK
-    Connection: close
-    Content-Type: application/json
-    Content-Length: 41
-
-    {"id":1,"registration_number":123456,"name":"Foo","last_name":"Bar","status":"changed3"}
-
-## Attempt to change a Student using invalid params
+## Signout a specific User
 
 ### Request
 
-`PUT /students/:id`
+`DELETE /signout/:token`
 
-    curl -i -H 'Accept: application/json' -X PUT -d 'id=99&status=changed4' http://localhost:7000/students/1
-
-### Response
-
-    HTTP/1.1 200 OK
-    Date: Thu, 24 Feb 2011 12:36:32 GMT
-    Status: 200 OK
-    Connection: close
-    Content-Type: application/json
-    Content-Length: 41
-
-    {"id":1,"registration_number":123456,"name":"Foo","last_name":"Bar","status":"changed4"}
-
-## Change a Student using the _method hack
-
-### Request
-
-`POST /students/:id`
-
-    curl -i -H 'Accept: application/json' -X POST -d 'name=Baz&_method=PUT' http://localhost:7000/students/1
-
-### Response
-
-    HTTP/1.1 200 OK
-    Date: Thu, 24 Feb 2011 12:36:32 GMT
-    Status: 200 OK
-    Connection: close
-    Content-Type: application/json
-    Content-Length: 41
-
-    {"id":1,"registration_number":123456,"name":"Baz","last_name":"Bar","status":"changed4"}
-
-## Change a Student using the _method hack in the url
-
-### Request
-
-`POST /students/:id?_method=PUT`
-
-    curl -i -H 'Accept: application/json' -X POST -d 'name=Qux' http://localhost:7000/students/1?_method=PUT
-
-### Response
-
-    HTTP/1.1 404 Not Found
-    Date: Thu, 24 Feb 2011 12:36:32 GMT
-    Status: 404 Not Found
-    Connection: close
-    Content-Type: text/html;charset=utf-8
-    Content-Length: 35
-
-    {"id":1,"registration_number":123456,"name":"Qux","last_name":"Bar","status":"changed4"}
-
-## Delete a Student
-
-### Request
-
-`DELETE /students/id`
-
-    curl -i -H 'Accept: application/json' -X DELETE http://localhost:7000/students/1/
+    curl -i -H 'Accept: application/json' -X DELETE http://localhost:7000/signout/d9ffc44a-529c-4af5-8e67-cf452425b55b
 
 ### Response
 
     HTTP/1.1 204 No Content
-    Date: Thu, 24 Feb 2011 12:36:32 GMT
+    Date: Thu, 27 May 2017 12:36:30 GMT
     Status: 204 No Content
     Connection: close
 
-
-## Try to delete same Student again
-
-### Request
-
-`DELETE /students/id`
-
-    curl -i -H 'Accept: application/json' -X DELETE http://localhost:7000/students/1/
-
-### Response
-
-    HTTP/1.1 404 Not Found
-    Date: Thu, 24 Feb 2011 12:36:32 GMT
-    Status: 404 Not Found
-    Connection: close
-    Content-Type: application/json
-    Content-Length: 35
-
-    {"status":404,"reason":"Not found"}
-
-## Get deleted Student
+## Delete a specific user
 
 ### Request
 
-`GET /students/1`
+`DELETE /profile/:token`
 
-    curl -i -H 'Accept: application/json' http://localhost:7000/students/1
-
-### Response
-
-    HTTP/1.1 404 Not Found
-    Date: Thu, 24 Feb 2011 12:36:33 GMT
-    Status: 404 Not Found
-    Connection: close
-    Content-Type: application/json
-    Content-Length: 35
-
-    {"status":404,"reason":"Not found"}
-
-## Delete a Student using the _method hack
-
-### Request
-
-`POST /students/id`
-
-    curl -i -H 'Accept: application/json' -X POST -d '_method=DELETE' http://localhost:7000/students/2/
+    curl -i -H 'Accept: application/json' -X DELETE http://localhost:7000/profile/d9ffc44a-529c-4af5-8e67-cf452425b55b
 
 ### Response
 
     HTTP/1.1 204 No Content
-    Date: Thu, 24 Feb 2011 12:36:33 GMT
+    Date: Thu, 27 May 2017 12:36:30 GMT
     Status: 204 No Content
     Connection: close
-
-## Get supported HTTP methods
-
-### Request
-
-`OPTIONS /students/`
-
-    curl -i -H 'Accept: application/json' -X OPTIONS http://localhost:7000/students
-
-### Response
-
-    HTTP/1.1 200 OK
-    Date: Fri, 17 Apr 2015 04:33:37 GMT
-    Status: 200 OK
-    Connection: close
-    Content-Type: text/html;charset=utf-8
-    Allow: GET, POST, PUT, PATCH, DELETE, OPTIONS
-    X-XSS-Protection: 1; mode=block
-    X-Content-Type-Options: nosniff
-    X-Frame-Options: SAMEORIGIN
-    Transfer-Encoding: chunked
-
-    Content-TypeAllowX-XSS-ProtectionX-Content-Type-OptionsX-Frame-OptionsTransfer-Encoding

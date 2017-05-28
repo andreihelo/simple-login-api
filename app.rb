@@ -110,7 +110,7 @@ class UserResource < Sinatra::Base
     end
   end
 
-  ## POST /signup - Create new user
+  ## POST /signup - Create a new user
   post '/signup', provides: :json do
     content_type :json
     response['Access-Control-Allow-Origin'] = '*'
@@ -142,7 +142,7 @@ class UserResource < Sinatra::Base
     end
   end
 
-  ## GET /profile/:token - return user with specified token
+  ## GET /profile/:token - Return user with specified token
   get '/profile/:token', provides: :json do
     content_type :json
     response['Access-Control-Allow-Origin'] = '*'
