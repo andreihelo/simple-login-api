@@ -154,28 +154,24 @@ class UserResource < Sinatra::Base
     end
   end
 
-  # ## PUT /students/:id - change or create a user
-  # put_or_post "/students/:id", :provides => :json do
-  #   content_type :json
-  #   response['Access-Control-Allow-Origin'] = '*'
-  #
-  #   new_params = accept_params(params, :registration_number, :name, :last_name, :status)
-  #
-  #   if User.valid_id?(params[:id])
-  #     if user = User.first_or_create(:id => params[:id].to_i)
-  #       user.attributes = user.attributes.merge(new_params)
-  #       if user.save
-  #         user.to_json
-  #       else
-  #         json_status 400, user.errors.to_hash
-  #       end
-  #     else
-  #       json_status 404, "Not found"
-  #     end
-  #   else
-  #     json_status 404, "Not found"
-  #   end
-  # end
+  ## PUT /profile/:token - Change user attributes
+  put_or_post '/profile/:token', provides: :json do
+    content_type :json
+    response['Access-Control-Allow-Origin'] = '*'
+
+    new_params = accept_params(params, :first_name, :last_name, :password, :password_confirmation)
+
+    if user = User.first(token: params[:token])
+      user.attributes = user.attributes.merge(new_params)
+      if user.save
+        user.to_json(exclude: [:id, :password_confirmation])
+      else
+        json_status 400, user.errors.to_hash
+      end
+    else
+      json_status 404, 'Not found'
+    end
+  end
   #
   # ## DELETE /students/:id - delete a specific user
   # delete "/students/:id/?", :provides => :json do
