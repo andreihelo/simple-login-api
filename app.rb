@@ -17,8 +17,6 @@ require 'dm-types'
 require 'dm-timestamps'
 require 'dm-validations'
 
-require 'pry'
-
 ##   Model
 ###  Helper modules
 #### StandardProperties
@@ -26,8 +24,6 @@ module StandardProperties
   def self.included(other)
     other.class_eval do
       property :id, other::Serial
-      # property :created_at, DateTime
-      # property :updated_at, DateTime
     end
   end
 end
@@ -37,10 +33,6 @@ module Validations
   def valid_id?(id)
     id && id.to_s =~ /^\d+$/
   end
-  #
-  # def valid_password?(password, password_confirmation)
-  #   password === password_confirmation
-  # end
 end
 
 ### User
@@ -50,15 +42,19 @@ class User
   extend  Validations
 
   property :token,                 String
-  property :username,              String, required: true
+  property :username,              String, required: true,
+           format: /^[a-z0-9_-]{3,15}$/,
+           messages: {format: 'Username should include only downcase letters, numbers, underscore and hyphens'}
   property :first_name,            String, required: true
   property :last_name,             String, required: true
   property :password,              String, required: true
   property :password_confirmation, String, required: true
 
-  validates_length_of   :password,              min: 6
-  validates_length_of   :password_confirmation, min: 6
-  validates_with_method :password, method: :password_confirmation_matches?
+  validates_uniqueness_of :username
+  validates_length_of     :username,              min: 6, max: 15
+  validates_length_of     :password,              min: 6
+  validates_length_of     :password_confirmation, min: 6
+  validates_with_method   :password, method: :password_confirmation_matches?
 
   def password_confirmation_matches?
     if self.password === self.password_confirmation
@@ -115,54 +111,49 @@ class UserResource < Sinatra::Base
   end
 
   ## POST /signup - Create new user
-  post '/signup/?', provides: :json do
+  post '/signup', provides: :json do
     content_type :json
     response['Access-Control-Allow-Origin'] = '*'
 
     new_params = accept_params(params, :username, :first_name, :last_name, :password, :password_confirmation)
-    new_params.merge!(token: SecureRandom.uuid)
     user       = User.new(new_params)
 
     if user.save
-      headers['Location'] = "/users/#{user.token}"
       # http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9.5
       status 201 # Created
-      user.to_json(exclude: [:id])
+      user.to_json(exclude: [:id, :token, :password, :password_confirmation])
     else
       json_status 400, user.errors.to_hash
     end
   end
 
-  # ## GET /students/:id - return user with specified id
-  # get "/students/:id", :provides => :json do
-  #   content_type :json
-  #   response['Access-Control-Allow-Origin'] = '*'
-  #
-  #   # check that :id param is an integer
-  #   if User.valid_id?(params[:id])
-  #     if student = User.first(:id => params[:id].to_i)
-  #       student.to_json
-  #     else
-  #       json_status 404, "Not found"
-  #     end
-  #   else
-  #     # TODO: find better error for this (id not an integer)
-  #     json_status 404, "Not found"
-  #   end
-  # end
-  #
+  ## GET /signin - Login an existing user
+  get '/signin', provides: :json do
+    content_type :json
+    response['Access-Control-Allow-Origin'] = '*'
+
+    new_params = accept_params(params, :username, :password)
+
+    if user = User.first(username: new_params[:username], password: new_params[:password])
+      user.update!(token: SecureRandom.uuid)
+      user.to_json(exclude: [:id, :password, :password_confirmation])
+    else
+      json_status 401, 'Invalid credentials'
+    end
+  end
+
   # ## PATCH /students/:id/:status - change a user's status
   # patch "/students/:id/status/:status", :provides => :json do
   #   content_type :json
   #   response['Access-Control-Allow-Origin'] = '*'
   #
   #   if User.valid_id?(params[:id])
-  #     if student = User.first(:id => params[:id].to_i)
-  #       student.status = params[:status]
-  #       if student.save
-  #         student.to_json
+  #     if user = User.first(:id => params[:id].to_i)
+  #       user.status = params[:status]
+  #       if user.save
+  #         user.to_json
   #       else
-  #         json_status 400, student.errors.to_hash
+  #         json_status 400, user.errors.to_hash
   #       end
   #     else
   #       json_status 404, "Not found"
@@ -180,12 +171,12 @@ class UserResource < Sinatra::Base
   #   new_params = accept_params(params, :registration_number, :name, :last_name, :status)
   #
   #   if User.valid_id?(params[:id])
-  #     if student = User.first_or_create(:id => params[:id].to_i)
-  #       student.attributes = student.attributes.merge(new_params)
-  #       if student.save
-  #         student.to_json
+  #     if user = User.first_or_create(:id => params[:id].to_i)
+  #       user.attributes = user.attributes.merge(new_params)
+  #       if user.save
+  #         user.to_json
   #       else
-  #         json_status 400, student.errors.to_hash
+  #         json_status 400, user.errors.to_hash
   #       end
   #     else
   #       json_status 404, "Not found"
@@ -200,8 +191,8 @@ class UserResource < Sinatra::Base
   #   content_type :json
   #   response['Access-Control-Allow-Origin'] = '*'
   #
-  #   if student = User.first(:id => params[:id].to_i)
-  #     student.destroy!
+  #   if user = User.first(:id => params[:id].to_i)
+  #     user.destroy!
   #     # http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9.7
   #     status 204 # No content
   #   else
