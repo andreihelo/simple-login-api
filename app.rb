@@ -172,37 +172,52 @@ class UserResource < Sinatra::Base
       json_status 404, 'Not found'
     end
   end
-  #
-  # ## DELETE /students/:id - delete a specific user
-  # delete "/students/:id/?", :provides => :json do
-  #   content_type :json
-  #   response['Access-Control-Allow-Origin'] = '*'
-  #
-  #   if user = User.first(:id => params[:id].to_i)
-  #     user.destroy!
-  #     # http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9.7
-  #     status 204 # No content
-  #   else
-  #     # http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9.1.2
-  #     # Note: section 9.1.2 states:
-  #     #   Methods can also have the property of "idempotence" in that
-  #     #   (aside from error or expiration issues) the side-effects of
-  #     #   N > 0 identical requests is the same as for a single
-  #     #   request.
-  #     # i.e that the /side-effects/ are idempotent, not that the
-  #     # result of the /request/ is idempotent, so I think it's correct
-  #     # to return a 404 here.
-  #     json_status 404, "Not found"
-  #   end
-  # end
-  #
-  # options "/students" do
-  #   response['Access-Control-Allow-Origin']  = '*'
-  #   response['Access-Control-Allow-Methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS'
-  #   response['Access-Control-Allow-Headers'] = 'Allow'
-  #   status 200
-  #   headers "Allow" => "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-  # end
+
+  ## DELETE /signout/:token - Signout a specific user
+  delete '/signout/:token', provides: :json do
+    content_type :json
+    response['Access-Control-Allow-Origin'] = '*'
+
+    if user = User.first(token: params[:token])
+      user.update!(token: nil)
+      # http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9.7
+      status 204 # No content
+    else
+      # http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9.1.2
+      # Note: section 9.1.2 states:
+      #   Methods can also have the property of "idempotence" in that
+      #   (aside from error or expiration issues) the side-effects of
+      #   N > 0 identical requests is the same as for a single
+      #   request.
+      # i.e that the /side-effects/ are idempotent, not that the
+      # result of the /request/ is idempotent, so I think it's correct
+      # to return a 404 here.
+      json_status 404, 'Not found'
+    end
+  end
+
+  ## DELETE /profile/:token - Delete a specific user
+  delete '/profile/:token', provides: :json do
+    content_type :json
+    response['Access-Control-Allow-Origin'] = '*'
+
+    if user = User.first(token: params[:token])
+      user.destroy!
+      # http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9.7
+      status 204 # No content
+    else
+      # http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9.1.2
+      # Note: section 9.1.2 states:
+      #   Methods can also have the property of "idempotence" in that
+      #   (aside from error or expiration issues) the side-effects of
+      #   N > 0 identical requests is the same as for a single
+      #   request.
+      # i.e that the /side-effects/ are idempotent, not that the
+      # result of the /request/ is idempotent, so I think it's correct
+      # to return a 404 here.
+      json_status 404, 'Not found'
+    end
+  end
   
   ## Misc handlers: error, not_found, etc.
   get '*' do
