@@ -127,8 +127,8 @@ class UserResource < Sinatra::Base
     end
   end
 
-  ## GET /signin - Login an existing user
-  get '/signin', provides: :json do
+  ## POST /signin - Login an existing user
+  post '/signin', provides: :json do
     content_type :json
     response['Access-Control-Allow-Origin'] = '*'
 
@@ -142,27 +142,18 @@ class UserResource < Sinatra::Base
     end
   end
 
-  # ## PATCH /students/:id/:status - change a user's status
-  # patch "/students/:id/status/:status", :provides => :json do
-  #   content_type :json
-  #   response['Access-Control-Allow-Origin'] = '*'
-  #
-  #   if User.valid_id?(params[:id])
-  #     if user = User.first(:id => params[:id].to_i)
-  #       user.status = params[:status]
-  #       if user.save
-  #         user.to_json
-  #       else
-  #         json_status 400, user.errors.to_hash
-  #       end
-  #     else
-  #       json_status 404, "Not found"
-  #     end
-  #   else
-  #     json_status 404, "Not found"
-  #   end
-  # end
-  #
+  ## GET /profile/:token - return user with specified token
+  get '/profile/:token', provides: :json do
+    content_type :json
+    response['Access-Control-Allow-Origin'] = '*'
+
+    if user = User.first(token: params[:token])
+      user.to_json(exclude: [:id, :password_confirmation])
+    else
+      json_status 404, 'Not found'
+    end
+  end
+
   # ## PUT /students/:id - change or create a user
   # put_or_post "/students/:id", :provides => :json do
   #   content_type :json
